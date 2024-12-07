@@ -4,10 +4,14 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import ArtworkCard from '../components/ArtworkCard'; 
 import Container from 'react-bootstrap/Container';
+import { useEffect, useState } from 'react';
 
 export default function Favourites() {
   // Get the favourites list from Jotai atom
   const [favouritesList] = useAtom(favouritesAtom);
+
+  // Ensure that favouritesList is loaded before rendering
+  if (!favouritesList) return null;
 
   return (
     <Container>

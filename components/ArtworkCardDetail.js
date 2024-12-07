@@ -1,28 +1,32 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAtom } from 'jotai';
-import { favouritesAtom } from '../store'; // Adjust the path to store.js as needed
+import { favouritesAtom } from '../store';
 import useSWR from 'swr';
 import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
 import Error from 'next/error';
+import { addToFavourites, removeFromFavourites } from '../utils/userData';
 
 function ArtworkCardDetail({ objectID }) {
   // Get the favourites list and setFavouritesList function from Jotai atom
   const [favouritesList, setFavouritesList] = useAtom(favouritesAtom);
   
   // Track whether the artwork is in the favourites list
-  const [showAdded, setShowAdded] = useState(favouritesList.includes(objectID));
+  const [showAdded, setShowAdded] = useState(false);
+
+  // Use effect to update the showAdded state
+  useEffect(() => {
+    setShowAdded(favouritesList?.includes(objectID));
+  }, [favouritesList, objectID]);
 
   // Function to handle adding/removing from favourites
-  const favouritesClicked = () => {
+  const favouritesClicked = async () => {
     if (showAdded) {
-      // Remove the artwork from favourites
-      setFavouritesList((current) => current.filter((fav) => fav !== objectID));
-      setShowAdded(false);
+      // Remove the artwork from favourites and update state
+      setFavouritesList(await removeFromFavourites(objectID));
     } else {
-      // Add the artwork to favourites
-      setFavouritesList((current) => [...current, objectID]);
-      setShowAdded(true);
+      // Add the artwork to favourites and update state
+      setFavouritesList(await addToFavourites(objectID));
     }
   };
 

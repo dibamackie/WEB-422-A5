@@ -1,5 +1,5 @@
 import { useAtom } from 'jotai';
-import { searchHistoryAtom } from '../store'; 
+import { searchHistoryAtom } from '../store';
 import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/router';
 import Form from 'react-bootstrap/Form';
@@ -7,27 +7,37 @@ import Button from 'react-bootstrap/Button';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
+import { addToHistory } from '../utils/userData'; // Import addToHistory function
 
 export default function AdvancedSearch() {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const router = useRouter();
   const [searchHistory, setSearchHistory] = useAtom(searchHistoryAtom);
 
-  const submitForm = (data) => {
+  const submitForm = async (data) => {
+    console.log('Submit Form Triggered');
+
     // Construct the query string
     let queryString = `searchBy=${data.searchBy}`;
-
     if (data.q) queryString += `&q=${data.q}`;
     if (data.geoLocation) queryString += `&geoLocation=${data.geoLocation}`;
     if (data.medium) queryString += `&medium=${data.medium}`;
     if (data.isOnView) queryString += `&isOnView=true`;
     if (data.isHighlight) queryString += `&isHighlight=true`;
 
-    // Add the search to the search history
-    setSearchHistory(current => [...current, queryString]);
+    console.log('Query String:', queryString);
 
-    // Redirect to /artwork with the query string
-    router.push(`/artwork?${queryString}`);
+    try {
+      // Add the search to the search history using the API
+      const updatedHistory = await addToHistory(queryString);
+      console.log('Updated History:', updatedHistory);
+      setSearchHistory(updatedHistory);
+
+      // Redirect to /artwork with the query string
+      router.push(`/artwork?${queryString}`);
+    } catch (error) {
+      console.error('Error adding to history:', error);
+    }
   };
 
   return (

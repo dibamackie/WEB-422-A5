@@ -6,12 +6,42 @@ import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
 import Container from 'react-bootstrap/Container';
 import styles from '@/styles/History.module.css';
+import { useEffect, useState } from 'react';
+import { getHistory, removeFromHistory } from '../utils/userData'; 
 
 export default function History() {
-  // Step 1: Get the search history from Jotai atom
-  const [searchHistory, setSearchHistory] = useAtom(searchHistoryAtom);
+  const router = useRouter();
+  const [searchHistory, setSearchHistory] = useState([]);
 
-  // Step 2: Parse the search history into an array of objects
+  // Fetch search history from the server
+  useEffect(() => {
+    const fetchSearchHistory = async () => {
+      const token = localStorage.getItem('token');
+
+      try {
+        const response = await fetch('http://localhost:5000/api/user/history', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          setSearchHistory(data.history); // Update the searchHistory from fetched data
+        } else {
+          console.error(data.message);
+        }
+      } catch (error) {
+        console.error('Error fetching search history:', error);
+      }
+    };
+
+    fetchSearchHistory();
+  }, []);
+
+  // Parse the search history
   let parsedHistory = [];
   searchHistory.forEach(h => {
     let params = new URLSearchParams(h);
@@ -19,24 +49,21 @@ export default function History() {
     parsedHistory.push(Object.fromEntries(entries));
   });
 
-  // Step 3: Define the functions for handling clicks
-  const router = useRouter();
-
   // Function to navigate to a search query
   const historyClicked = (e, index) => {
     router.push(`/artwork?${searchHistory[index]}`);
   };
 
   // Function to remove an item from search history
-  const removeHistoryClicked = (e, index) => {
+  const removeHistoryClicked = async (e, index) => {
     e.stopPropagation(); // Prevent other event propagation
-    setSearchHistory(current => {
-      let x = [...current];
-      x.splice(index, 1);
-      return x;
-    });
+
+    // Remove from backend
+    const updatedHistory = await removeFromHistory(searchHistory[index]);
+    setSearchHistory(updatedHistory);
   };
 
+  // Corrected return statement
   return (
     <Container>
       <h1 className="my-4">Search History</h1>
